@@ -1,47 +1,39 @@
-import streamlit as st
-import joblib
+import pickle
 import numpy as np
+from flask import Flask, request, render_template
 
-# Load the trained model
-@st.cache_resource
-def load_model():
-    # Ensure your model file is named 'model.pkl' and in the root directory
-    return joblib.load('Checkup_Price.pkl')
+app = Flask(__name__)
 
-try:
-    model = load_model()
-except FileNotFoundError:
-    st.error("Model file 'model.pkl' not found. Please upload it to your repository.")
-    st.stop()
+# Load the Scikit-Learn model
+with open('Checkup_Price.pkl', 'rb') as f:
+    model = pickle.load(f)
 
-st.title("Insurance Cost Predictor 🏥")
-st.write("This is a practice web app deployed on AWS via GitHub. Enter the details below to predict the insurance charge.")
+@app.route('/', methods=['GET'])
+def home():
+    # Render the input form
+    return render_template('index.html')
 
-# Define the user inputs
-col1, col2 = st.columns(2)
+@app.route('/predict', methods=['POST'])
+def predict():
+    try:
+        # Extract features from the HTML form
+        age = float(request.form['age'])
+        sex = float(request.form['sex'])
+        bmi = float(request.form['bmi'])
+        children = float(request.form['children'])
+        smoker = float(request.form['smoker'])
+        region = float(request.form['region'])
+        
+        # Format for the model (2D array)
+        features = np.array([[age, sex, bmi, children, smoker, region]])
+        
+        # Generate prediction
+        prediction = model.predict(features)[0]
+        
+        return render_template('index.html', prediction_text=f'Predicted Charges: ${prediction:,.2f}')
+    except Exception as e:
+        return render_template('index.html', prediction_text=f'Error: {str(e)}')
 
-with col1:
-    age = st.number_input("Age", min_value=18, max_value=120, value=30)
-    bmi = st.number_input("BMI", min_value=10.0, max_value=60.0, value=25.0)
-    children = st.number_input("Number of Children", min_value=0, max_value=10, value=0)
-
-with col2:
-    # Mappings correspond to typical ordinal encoding for this dataset
-    sex_input = st.selectbox("Sex", options=[("Female", 0), ("Male", 1)], format_func=lambda x: x[0])
-    smoker_input = st.selectbox("Smoker", options=[("No", 0), ("Yes", 1)], format_func=lambda x: x[0])
-    region_input = st.selectbox("Region", options=[("Southwest", 0), ("Southeast", 1), ("Northwest", 2), ("Northeast", 3)], format_func=lambda x: x[0])
-
-if st.button("Predict Charge", type="primary"):
-    # Model expects feature_names_in_: ['age', 'sex', 'bmi', 'children', 'smoker', 'region']
-    features = np.array([[
-        age, 
-        sex_input[1], 
-        bmi, 
-        children, 
-        smoker_input[1], 
-        region_input[1]
-    ]])
-    
-    prediction = model.predict(features)[0]
-    
-    st.success(f"**Predicted Insurance Cost:** ${prediction:,.2f}")
+if __name__ == "__main__":
+    # Gunicorn will override this in production, but it's useful for local testing
+    app.run(host="0.0.0.0", port=8000)
