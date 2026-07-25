@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Insurance Predictor</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; background-color: #f4f4f9; }
+        .container { max-width: 500px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0px 4px 6px rgba(0,0,0,0.1); }
+        h2 { text-align: center; }
+        label { font-weight: bold; margin-top: 10px; display: block; }
+        input, select { width: 100%; padding: 8px; margin-top: 5px; margin-bottom: 15px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+        button { width: 100%; padding: 10px; background-color: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; }
+        button:hover { background-color: #0056b3; }
+        .result { margin-top: 20px; text-align: center; font-size: 1.2em; font-weight: bold; color: #28a745; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Medical Charges Predictor</h2>
+    <form action="/predict" method="POST">
+        <label for="age">Age:</label>
+        <input type="number" name="age" required>
+
+        <label for="sex">Sex (e.g., 0 for female, 1 for male):</label>
+        <input type="number" name="sex" step="any" required>
+
+        <label for="bmi">BMI:</label>
+        <input type="number" name="bmi" step="any" required>
+
+        <label for="children">Number of Children:</label>
+        <input type="number" name="children" required>
+
+        <label for="smoker">Smoker (0 for no, 1 for yes):</label>
+        <input type="number" name="smoker" step="any" required>
+
+        <label for="region">Region (Encoded 0-3):</label>
+        <input type="number" name="region" step="any" required>
+
+        <button type="submit">Predict</button>
+    </form>
+
+    {% if prediction_text %}
+    <div class="result">
+        {{ prediction_text }}
+    </div>
+    {% endif %}
+</div>
+
+</body>
+</html>
